@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -48,6 +48,7 @@ type CandidateIconName =
   | "tests"
   | "cv"
   | "achievements"
+  | "favorites"
   | "applications"
   | "messages"
   | "profile"
@@ -105,6 +106,12 @@ function CandidateSidebarIcon({ name }: { name: CandidateIconName }) {
           <path d="M8 6h8v3a4 4 0 0 1-8 0V6Z" />
           <path d="M6 7H4a3 3 0 0 0 3 3M18 7h2a3 3 0 0 1-3 3" />
           <path d="M12 13v4M9 21h6" />
+        </svg>
+      );
+    case "favorites":
+      return (
+        <svg {...props}>
+          <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1L3.2 9.4l6.1-.9L12 3Z" />
         </svg>
       );
     case "applications":
@@ -220,6 +227,9 @@ export function Navbar({
   const profileShellRef = useRef<HTMLDivElement | null>(null);
   const keyboardBufferTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCandidate = utilisateur.role === "candidat";
+  const isAdmin = utilisateur.role === "admin";
+  const isEntreprise = utilisateur.role === "entreprise";
+  const usesReferenceSidebar = isCandidate || isAdmin || isEntreprise;
   const hasCollapsibleSidebar = utilisateur.role === "candidat" || utilisateur.role === "admin" || utilisateur.role === "entreprise";
   const keyboardModeEnabled = settings.keyboardMoveMode;
   const keyboardAnnouncement = keyboardModeEnabled ? t("accessibility.keyboardAnnouncement") : "";
@@ -261,32 +271,16 @@ export function Navbar({
 
     if (utilisateur.role === "admin") {
       return [
-        { href: "/home", label: t("navbar.workspace") },
-        {
-          id: "admin-accounts",
-          label: t("navbar.accounts"),
-          items: [
-            { href: "/admin/comptes", label: t("navbar.accounts") },
-            { href: "/admin/utilisateurs", label: t("home.workspace.admin.actions.usersTitle") },
-          ],
-        },
-        {
-          id: "admin-operations",
-          label: t("navbar.insights"),
-          items: [
-            { href: "/admin/supervision", label: t("navbar.supervision") },
-            { href: "/admin/tests-psychologiques", label: t("navbar.assessments") },
-          ],
-        },
-        {
-          id: "admin-social",
-          label: t("navbar.social"),
-          badgeCount: notificationsNonLues,
-          items: [
-            { href: "/messages", label: t("navbar.messages") },
-            { href: "/notifications", label: t("navbar.notifications"), badgeCount: notificationsNonLues },
-          ],
-        },
+        { href: "/home", label: "Dashboard" },
+        { href: "/admin/supervision/candidates", label: "Candidates" },
+        { href: "/admin/comptes", label: "Employers" },
+        { href: "/admin/supervision/offers", label: "Job Postings" },
+        { href: "/admin/supervision", label: "Applications" },
+        { href: "/admin/supervision/pipeline", label: "Interviews" },
+        { href: "/admin/supervision/reports", label: "Accessibility" },
+        { href: "/admin/statistiques", label: "Reports" },
+        { href: "/admin/utilisateurs", label: "Users" },
+        { href: "/profil", label: "Settings" },
       ] satisfies NavItem[];
     }
 
@@ -310,6 +304,7 @@ export function Navbar({
           label: "Job listings",
           items: [
             { href: "/entreprise/offres", label: "All roles" },
+            { href: "/entreprise/shortlist", label: "IA shortlisting" },
           ],
         },
         {
@@ -350,38 +345,61 @@ export function Navbar({
   }, [t, utilisateur.role]);
 
   const profilHref = utilisateur.role === "entreprise" ? "/entreprise/profil" : "/profil";
-  type CandidateSidebarItem =
-    | {
-        id: string;
-        label: string;
-        subtitle: string;
-        icon: CandidateIconName;
-        href: string;
-        action?: never;
-        badgeCount?: number;
-      }
-    | {
-        id: string;
-        label: string;
-        subtitle: string;
-        icon: CandidateIconName;
-        action: "accessibility";
-        href?: never;
-        badgeCount?: number;
-      };
+  const roleChipLabel = utilisateur.role === "admin" ? "Super Admin" : t(`common.roles.${utilisateur.role}`);
+  const roleBrandSubtitle = utilisateur.role === "admin" ? "Inclusive Hiring Platform" : roleChipLabel;
+  type CandidateSidebarItem = {
+    id: string;
+    label: string;
+    subtitle: string;
+    icon: CandidateIconName;
+    href: string;
+    badgeCount?: number;
+  };
 
   const candidateSidebarItems = useMemo<CandidateSidebarItem[]>(
     () => [
-      { id: "dashboard", label: "Dashboard", subtitle: "Home", icon: "dashboard", href: "/home" },
-      { id: "jobs", label: "Offres d'emploi", subtitle: "Explorer", icon: "applications", href: "/offres" },
-      { id: "tests", label: "Tests & Assessments", subtitle: "Evaluation", icon: "tests", href: "/candidat/tests-psychologiques" },
-      { id: "cv", label: "CV Builder", subtitle: "Resume", icon: "cv", href: "/candidat/cv" },
-      { id: "applications", label: "Applications", subtitle: "Tracking", icon: "applications", href: "/candidat/candidatures" },
-      { id: "messages", label: "Messages", subtitle: "Inbox", icon: "messages", href: "/messages", badgeCount: notificationsNonLues },
-      { id: "profile", label: "Profile", subtitle: "Account", icon: "profile", href: "/profil" },
+      { id: "home", label: "Accueil", subtitle: "Tableau de bord", icon: "dashboard", href: "/home" },
+      { id: "jobs", label: "Offres d'emploi", subtitle: "Recherche", icon: "applications", href: "/offres" },
+      { id: "applications", label: "Candidatures", subtitle: "Suivi", icon: "applications", href: "/candidat/candidatures" },
+      { id: "profile-settings", label: "Profil & Parametres", subtitle: "Compte", icon: "profile", href: "/profil" },
+      { id: "tests", label: "Tests & evaluations", subtitle: "Progression", icon: "tests", href: "/candidat/tests-psychologiques" },
+      { id: "cv", label: "CV Builder", subtitle: "Documents", icon: "cv", href: "/candidat/cv" },
+      { id: "messages", label: "Messagerie", subtitle: "Inbox", icon: "messages", href: "/messages", badgeCount: notificationsNonLues },
+      { id: "favorites", label: "Favoris", subtitle: "Offres enregistrees", icon: "favorites", href: "/favoris" },
     ],
     [notificationsNonLues],
   );
+
+  const adminSidebarItems = useMemo<CandidateSidebarItem[]>(
+    () => [
+      { id: "admin-dashboard", label: "Dashboard", subtitle: "Vue globale", icon: "dashboard", href: "/home" },
+      { id: "admin-candidates", label: "Candidates", subtitle: "Talent pool", icon: "profile", href: "/admin/supervision/candidates" },
+      { id: "admin-employers", label: "Employers", subtitle: "Entreprises", icon: "skills", href: "/admin/comptes" },
+      { id: "admin-jobs", label: "Job Postings", subtitle: "Offres", icon: "cv", href: "/admin/supervision/offers" },
+      { id: "admin-apps", label: "Applications", subtitle: "Suivi", icon: "applications", href: "/admin/supervision" },
+      { id: "admin-interviews", label: "Interviews", subtitle: "Pipeline", icon: "tests", href: "/admin/supervision/pipeline" },
+      { id: "admin-a11y", label: "Accessibility", subtitle: "Conformite", icon: "accessibility", href: "/admin/supervision/reports" },
+      { id: "admin-reports", label: "Reports", subtitle: "Analytique", icon: "achievements", href: "/admin/statistiques" },
+      { id: "admin-users", label: "Users", subtitle: "Gestion", icon: "messages", href: "/admin/utilisateurs" },
+      { id: "admin-settings", label: "Settings", subtitle: "Compte", icon: "settings", href: "/profil" },
+    ],
+    [],
+  );
+
+  const entrepriseSidebarItems = useMemo<CandidateSidebarItem[]>(
+    () => [
+      { id: "ent-home", label: "Accueil", subtitle: "Tableau de bord", icon: "dashboard", href: "/home" },
+      { id: "ent-offers", label: "Offres d'emploi", subtitle: "Gestion des postes", icon: "cv", href: "/entreprise/offres" },
+      { id: "ent-applications", label: "Candidatures", subtitle: "Suivi candidats", icon: "applications", href: "/entreprise/candidatures" },
+      { id: "ent-shortlist", label: "IA Shortlisting", subtitle: "Preselection", icon: "tests", href: "/entreprise/shortlist" },
+      { id: "ent-reports-requests", label: "Demandes de rapport", subtitle: "Conformite", icon: "achievements", href: "/entreprise/reports-requests" },
+      { id: "ent-messages", label: "Messagerie", subtitle: "Inbox", icon: "messages", href: "/messages", badgeCount: notificationsNonLues },
+      { id: "ent-settings", label: "Profil & Parametres", subtitle: "Compte", icon: "settings", href: "/entreprise/profil" },
+    ],
+    [notificationsNonLues],
+  );
+
+  const sidebarItems = isAdmin ? adminSidebarItems : isEntreprise ? entrepriseSidebarItems : candidateSidebarItems;
 
   const isPathActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -718,7 +736,7 @@ export function Navbar({
     setNavigationMenuOuvert(menuId);
   };
 
-  if (isCandidate) {
+  if (usesReferenceSidebar) {
     return (
       <header className={classes("app-header", "app-theme", "app-header-candidat")} ref={headerRef}>
         <div className="app-header-inner candidate-sidebar-ref">
@@ -729,7 +747,7 @@ export function Navbar({
               </span>
               <span className={classes("candidate-sidebar-ref__brand-copy", candidateSidebarCollapsed && "is-collapsed")}>
                 <strong>HandiTalents</strong>
-                <span>CANDIDATE</span>
+                <span>{isAdmin ? "INCLUSIVE HIRING PLATFORM" : isEntreprise ? "ENTREPRISE" : "CANDIDATE"}</span>
               </span>
             </Link>
             {hasCollapsibleSidebar ? (
@@ -765,19 +783,16 @@ export function Navbar({
             ) : null}
           </div>
 
-          <nav className="candidate-sidebar-ref__nav" aria-label="Candidate navigation">
-            {candidateSidebarItems.map((item) => {
-              const isActive = item.action === "accessibility" ? false : isPathActive(item.href);
-              const action = item.action === "accessibility"
-                ? ouvrirPanneauAccessibilite
-                : () => naviguerVers(item.href);
+          <nav className="candidate-sidebar-ref__nav" aria-label={isAdmin ? "Admin navigation" : "Candidate navigation"}>
+            {sidebarItems.map((item) => {
+              const isActive = isPathActive(item.href);
 
               return (
                 <button
                   key={item.id}
                   type="button"
                   className={classes("candidate-sidebar-ref__item", isActive && "is-active", candidateSidebarCollapsed && "is-collapsed")}
-                  onClick={action}
+                  onClick={() => naviguerVers(item.href)}
                   title={candidateSidebarCollapsed ? item.label : undefined}
                 >
                   <span className="candidate-sidebar-ref__item-icon" aria-hidden="true">
@@ -795,22 +810,25 @@ export function Navbar({
             })}
           </nav>
 
-          <div className="candidate-sidebar-ref__divider" aria-hidden="true" />
+          {isCandidate ? (
+            <button
+              type="button"
+              className={classes("candidate-sidebar-ref__accessibility", candidateSidebarCollapsed && "is-collapsed")}
+              onClick={ouvrirPanneauAccessibilite}
+              title={candidateSidebarCollapsed ? t("accessibility.open") : undefined}
+              aria-label={t("accessibility.open")}
+            >
+              <span className="candidate-sidebar-ref__item-icon" aria-hidden="true">
+                <CandidateSidebarIcon name="accessibility" />
+              </span>
+              <span className={classes("candidate-sidebar-ref__accessibility-copy", candidateSidebarCollapsed && "is-collapsed")}>
+                <strong>{t("accessibility.open")}</strong>
+                <small>Options visuelles et navigation</small>
+              </span>
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            className={classes("candidate-sidebar-ref__accessibility", candidateSidebarCollapsed && "is-collapsed")}
-            onClick={ouvrirPanneauAccessibilite}
-            title={candidateSidebarCollapsed ? "Accessibility" : undefined}
-          >
-            <span className="candidate-sidebar-ref__item-icon" aria-hidden="true">
-              <CandidateSidebarIcon name="accessibility" />
-            </span>
-            <span className={classes("candidate-sidebar-ref__accessibility-copy", candidateSidebarCollapsed && "is-collapsed")}>
-              <strong>Accessibility</strong>
-            </span>
-            {!candidateSidebarCollapsed ? <span className="candidate-sidebar-ref__chevron">›</span> : null}
-          </button>
+          <div className="candidate-sidebar-ref__divider" aria-hidden="true" />
 
           <div className={classes("candidate-sidebar-ref__profile-card", candidateSidebarCollapsed && "is-collapsed")}>
             <Image
@@ -824,7 +842,7 @@ export function Navbar({
             <div className={classes("candidate-sidebar-ref__profile-copy", candidateSidebarCollapsed && "is-collapsed")}>
               <strong>{utilisateur.nom}</strong>
               <button type="button" onClick={() => naviguerVers(profilHref)}>
-                View profile
+                Voir mon profil
               </button>
             </div>
             {!candidateSidebarCollapsed ? <span className="candidate-sidebar-ref__chevron">›</span> : null}
@@ -832,7 +850,7 @@ export function Navbar({
 
           {!candidateSidebarCollapsed ? (
             <button type="button" className="candidate-sidebar-ref__logout-link" onClick={deconnexion}>
-              Sign out
+              Se deconnecter
             </button>
           ) : null}
         </div>
@@ -874,7 +892,7 @@ return (
             <span className="brand-mark" aria-hidden="true" />
             <span className={classes("brand-copy", isCandidate && candidateSidebarCollapsed && "brand-copy-collapsed")}>
               <strong>HandiTalents</strong>
-              <span>{t(`common.roles.${utilisateur.role}`)}</span>
+              <span>{roleBrandSubtitle}</span>
             </span>
           </Link>
           {hasCollapsibleSidebar ? (
@@ -976,7 +994,7 @@ return (
               <span className="profile-avatar">{utilisateur.nom.charAt(0).toUpperCase()}</span>
               <span className="profile-meta">
                 <strong>{utilisateur.nom}</strong>
-                <span>{t(`common.roles.${utilisateur.role}`)}</span>
+                <span>{roleChipLabel}</span>
               </span>
               <span className={classes("profile-caret", profilMenuOuvert && "profile-caret-open")} aria-hidden="true" />
             </button>
@@ -1154,3 +1172,4 @@ return (
     </header>
   );
 }
+

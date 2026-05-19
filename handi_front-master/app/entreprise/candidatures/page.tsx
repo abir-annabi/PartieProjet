@@ -755,7 +755,7 @@ export default function CandidaturesCompanyPage() {
       <div className="applicants-header">
         <div>
           <h1>Gestion des candidatures</h1>
-          <p>Filtrez, comparez et pilotez chaque candidature avec une vue claire du pipeline.</p>
+          <p>Chaque candidature est analysee automatiquement par l&apos;IA a la postulation. Ensuite, vous validez, planifiez un entretien ou ajustez manuellement.</p>
           <p className="applicants-header-meta">
             Total: {statistiques.total} | En attente: {statistiques.pending} | Preselection: {statistiques.shortlisted}
           </p>
@@ -952,6 +952,11 @@ export default function CandidaturesCompanyPage() {
                               <td data-label="Date de candidature">{formaterDate(candidature.date_postulation)}</td>
                               <td data-label="Statut">
                                 <span className={`status-pill ${statusPillClass(candidature.statut)}`}>{badge.label}</span>
+                                {candidature.statut === "rejected" && candidature.motif_refus ? (
+                                  <p className="rejection-inline" title={candidature.motif_refus}>
+                                    Motif: {candidature.motif_refus}
+                                  </p>
+                                ) : null}
                               </td>
                               <td data-label="Actions">
                                 <div className="table-actions">
@@ -987,7 +992,7 @@ export default function CandidaturesCompanyPage() {
                                       }
                                       disabled={actionEnCours}
                                     >
-                                      Shortlist
+                                      Shortlist manuel
                                     </Button>
                                   ) : null}
                                   {candidature.statut === "shortlisted" ? (
@@ -1670,6 +1675,13 @@ export default function CandidaturesCompanyPage() {
           color: #9c4a55;
           background: #f9ecee;
           border-color: #efd6da;
+        }
+        .rejection-inline {
+          margin: 6px 0 0;
+          max-width: 260px;
+          color: #8f4a56;
+          font-size: 0.76rem;
+          line-height: 1.35;
         }
         .table-actions {
           display: grid;

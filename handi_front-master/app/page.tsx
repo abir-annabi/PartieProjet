@@ -874,20 +874,6 @@ export default function HomePage() {
                 </div>
               </article>
 
-              <article className="ht-float-card ht-float-card-stats">
-                <ul className="ht-stats-list" aria-label="Platform impact stats">
-                  {content.hero.stats.map((item) => (
-                    <li key={item.label} className="ht-stats-item">
-                      <span className={`ht-stat-icon ht-stat-icon-${item.tone}`} aria-hidden="true" />
-                      <div className="ht-stat-copy">
-                        <strong>{item.value}</strong>
-                        <span>{item.label}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-
               <article className="ht-float-card ht-float-card-progress">
                 <span className="ht-card-eyebrow">{content.hero.progressEyebrow}</span>
                 <strong>{content.hero.progressTitle}</strong>

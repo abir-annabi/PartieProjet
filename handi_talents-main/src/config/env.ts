@@ -28,4 +28,7 @@ export const env = {
   smsFrom: process.env.SMS_FROM ?? "",
   twilioSid: process.env.TWILIO_SID ?? "",
   twilioToken: process.env.TWILIO_TOKEN ?? "",
+  iaApiUrl: process.env.IA_API_URL ?? "http://localhost:8000",
+  iaShortlistMinScore: Number(process.env.IA_SHORTLIST_MIN_SCORE ?? 50),
+  iaShortlistRequired: process.env.IA_SHORTLIST_REQUIRED === "true",
 };

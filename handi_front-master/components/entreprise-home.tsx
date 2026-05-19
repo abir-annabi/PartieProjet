@@ -334,8 +334,8 @@ export function EntrepriseHome({ utilisateurNom, stats, loadingStats, erreurStat
 
             <div className="offers-table">
               {activeOffers.length > 0 ? (
-                activeOffers.map((offer) => (
-                  <article key={offer.id_offre} className="offer-row">
+                activeOffers.map((offer, index) => (
+                  <article key={`${offer.id_offre || offer.titre || "offer"}-${index}`} className="offer-row">
                     <div className="offer-main">
                       <span className="offer-briefcase" aria-hidden="true">□</span>
                       <div>
@@ -722,7 +722,6 @@ function mapOfferStatus(raw?: string) {
   if (status === "pourvue") return "Pourvue";
   return raw || "En cours";
 }
-
 
 
 

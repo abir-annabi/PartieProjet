@@ -27,12 +27,16 @@ type Candidature = {
   date_postulation: string;
   statut: CandidatureStatut;
   uiStatut: CandidatureUiStatut;
+  motif_refus?: string | null;
+  score_test?: number | null;
 };
 
 type CandidatureApiSource = {
   id?: string;
   date_postulation?: string;
   statut?: string;
+  motif_refus?: string | null;
+  score_test?: number | null;
 };
 
 type CandidatureApiItem = CandidatureApiSource & {
@@ -75,6 +79,8 @@ type PageCopy = {
   errorFallback: string;
   previousPage: string;
   nextPage: string;
+  rejectionReason: string;
+  aiScore: string;
 };
 
 const PAGE_SIZE = 4;
@@ -132,6 +138,8 @@ const COPY: Record<"fr" | "en" | "ar", PageCopy> = {
     errorFallback: "Impossible de charger vos candidatures.",
     previousPage: "Precedent",
     nextPage: "Suivant",
+    rejectionReason: "Motif automatique",
+    aiScore: "Score IA",
   },
   en: {
     title: "My applications",
@@ -161,6 +169,8 @@ const COPY: Record<"fr" | "en" | "ar", PageCopy> = {
     errorFallback: "Unable to load your applications.",
     previousPage: "Previous",
     nextPage: "Next",
+    rejectionReason: "Automatic reason",
+    aiScore: "AI score",
   },
   ar: {
     title: "Tarashohati",
@@ -190,6 +200,8 @@ const COPY: Record<"fr" | "en" | "ar", PageCopy> = {
     errorFallback: "Ta3athar tahmil tarashohatik.",
     previousPage: "Sabeq",
     nextPage: "Tali",
+    rejectionReason: "Sabab arrafd",
+    aiScore: "Darejat al dhaka",
   },
 } as const;
 
@@ -378,6 +390,22 @@ const applicationsPageStyles = `
     flex-wrap: wrap;
     color: #504168;
     font-size: 0.98rem;
+  }
+
+  .applications-hub-rejection {
+    margin-top: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fff3f3;
+    color: #7f1d1d;
+    border: 1px solid #f3d0d0;
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
+  .applications-hub-rejection strong {
+    display: block;
+    margin-bottom: 4px;
   }
 
   .applications-hub-cardmeta span,
@@ -753,6 +781,8 @@ function normaliserCandidature(item: CandidatureApiItem, index: number): Candida
     date_postulation: candidature.date_postulation ?? new Date().toISOString(),
     statut,
     uiStatut: mapStatutVersUi(statut),
+    motif_refus: candidature.motif_refus ?? null,
+    score_test: typeof candidature.score_test === "number" ? candidature.score_test : null,
   };
 }
 
@@ -991,7 +1021,19 @@ function MesCandidaturesPage() {
                             <CalendarIcon />
                             {copy.appliedOn} {formaterDate(candidature.date_postulation, locale)}
                           </span>
+                          {typeof candidature.score_test === "number" ? (
+                            <span>
+                              {copy.aiScore}: {candidature.score_test}/100
+                            </span>
+                          ) : null}
                         </div>
+
+                        {candidature.statut === "rejected" && candidature.motif_refus ? (
+                          <div className="applications-hub-rejection" role="note">
+                            <strong>{copy.rejectionReason}</strong>
+                            <span>{candidature.motif_refus}</span>
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="applications-hub-timeline" aria-label={`${copy.allStatuses}: ${copy.tabs[candidature.uiStatut]}`}>

@@ -4,6 +4,16 @@ import { candidatureTable, candidatTable, entrepriseTable, offreEmploiTable, uti
 import { FiltreCandidatureDto, ModifierStatutCandidatureDto, PostulerDto } from "../dto/candidature.dto";
 
 export class CandidatureRepository {
+  async obtenirCandidatureParCandidatEtOffre(idCandidat: string, idOffre: string) {
+    const [candidature] = await db
+      .select()
+      .from(candidatureTable)
+      .where(and(eq(candidatureTable.id_candidat, idCandidat), eq(candidatureTable.id_offre, idOffre)))
+      .limit(1);
+
+    return candidature;
+  }
+
   async postuler(idCandidat: string, donnees: PostulerDto) {
     const candidatureExistante = await db
       .select()

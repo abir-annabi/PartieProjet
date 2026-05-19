@@ -76,7 +76,14 @@ export class CandidatureController {
       }
 
       const candidature = await this.candidatureService.postuler(idCandidat, donnees);
-      return reponseSucces(res, 201, "Candidature envoyee avec succes", candidature);
+      const message =
+        candidature?.statut === "shortlisted"
+          ? "Candidature envoyee et preselectionnee automatiquement par l'IA."
+          : candidature?.statut === "rejected"
+            ? `Candidature evaluee automatiquement: non retenue. ${candidature?.motif_refus || ""}`.trim()
+            : "Candidature envoyee avec succes. Analyse IA en cours.";
+
+      return reponseSucces(res, 201, message, candidature);
     } catch (erreur: unknown) {
       const { statutHttp, message } = extraireErreurHttp(erreur);
 

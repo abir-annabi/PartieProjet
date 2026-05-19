@@ -2,7 +2,6 @@
 
 import { Card } from "@/components/ui/card";
 import { EmptyState, LoadingState, StatCard } from "@/components/ui/layout";
-import { SupervisionShell } from "@/components/supervision/supervision-shell";
 import { useSupervisionQuery } from "@/components/supervision/use-supervision-query";
 import { PipelineResponse } from "@/lib/supervision";
 
@@ -18,11 +17,7 @@ export function SupervisionPipeline() {
   }
 
   return (
-    <SupervisionShell
-      badge="Recruitment Pipeline"
-      title="Track inclusive recruitment across applications, shortlist, interview, and hire stages."
-      description="Inspectors stay inside their regional delegation. ANETI and admins can supervise all covered companies."
-    >
+    <div className="stack-lg">
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard label="Offers" value={pipeline.data.totals.offers_count} />
         <StatCard label="Applications" value={pipeline.data.totals.applications_count} />
@@ -62,6 +57,6 @@ export function SupervisionPipeline() {
           </tbody>
         </table>
       </Card>
-    </SupervisionShell>
+    </div>
   );
 }

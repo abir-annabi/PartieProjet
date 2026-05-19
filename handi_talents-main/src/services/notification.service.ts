@@ -59,7 +59,12 @@ export class NotificationService {
     }
   }
 
-  async notifierChangementStatut(idUtilisateur: string | number, nouveauStatut: string, titreOffre: string) {
+  async notifierChangementStatut(
+    idUtilisateur: string | number,
+    nouveauStatut: string,
+    titreOffre: string,
+    options?: { motifRefus?: string | null; source?: "ia" | "manual" }
+  ) {
     const messages: Record<string, string> = {
       pending: "Votre candidature a ete recue et est en cours d'etude",
       shortlisted: "Votre candidature a ete preselectionnee",
@@ -68,12 +73,23 @@ export class NotificationService {
       accepted: "Felicitations ! Votre candidature a ete acceptee",
     };
 
+    const suffixeOrigine = options?.source === "ia" ? " (decision automatique IA)" : "";
+    const detailsMotif =
+      nouveauStatut === "rejected" && options?.motifRefus
+        ? ` Motif: ${options.motifRefus}`
+        : "";
+
     await this.creerNotification({
       id_utilisateur: String(idUtilisateur),
       type: "candidature_status_change",
       titre: "Mise a jour de candidature",
-      message: `${messages[nouveauStatut] || "Le statut de votre candidature a change"} pour l'offre "${titreOffre}"`,
-      data: JSON.stringify({ statut: nouveauStatut, offre: titreOffre }),
+      message: `${messages[nouveauStatut] || "Le statut de votre candidature a change"}${suffixeOrigine} pour l'offre "${titreOffre}".${detailsMotif}`,
+      data: JSON.stringify({
+        statut: nouveauStatut,
+        offre: titreOffre,
+        motif_refus: options?.motifRefus ?? null,
+        source: options?.source ?? "manual",
+      }),
     });
   }
 

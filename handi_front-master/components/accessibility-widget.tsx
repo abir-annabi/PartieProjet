@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAccessibility } from "@/components/accessibility-provider";
 import { useI18n } from "@/components/i18n-provider";
@@ -21,25 +21,159 @@ function FeatureToggle({
   description,
   active,
   onClick,
+  compact = false,
+  chip = false,
+  icon,
+  tone,
 }: {
   label: string;
   description?: string;
   active: boolean;
   onClick: () => void;
+  compact?: boolean;
+  chip?: boolean;
+  icon?: ReactNode;
+  tone?: "epilepsy" | "vision" | "dyslexia" | "adhd" | "blindness";
 }) {
+  if (chip) {
+    return (
+      <button
+        type="button"
+        className={`accessibility-chip ${active ? "accessibility-chip-active" : ""}`}
+        onClick={onClick}
+        aria-pressed={active}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        className={`accessibility-toggle-row ${active ? "accessibility-toggle-row-active" : ""}`}
+        onClick={onClick}
+        aria-pressed={active}
+      >
+        <span className="accessibility-toggle-row-icon" aria-hidden="true">{icon || "\u2022"}</span>
+        <span className="accessibility-toggle-row-copy">
+          <strong>{label}</strong>
+          {description ? <small>{description}</small> : null}
+        </span>
+        <span className={`accessibility-switch ${active ? "is-active" : ""}`} aria-hidden="true">
+          <span />
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <button type="button" className={`accessibility-tile ${active ? "accessibility-tile-active" : ""}`} onClick={onClick} aria-pressed={active}>
-      <span className="accessibility-tile-icon" aria-hidden="true">{active ? "\u25cf" : "\u25cb"}</span>
-      <span>{label}</span>
-      {description ? <small style={{ color: "var(--app-muted)", fontSize: "0.76rem", lineHeight: 1.35 }}>{description}</small> : null}
+    <button type="button" className={`accessibility-tile ${tone ? `accessibility-tile-${tone}` : ""} ${active ? "accessibility-tile-active" : ""}`} onClick={onClick} aria-pressed={active}>
+      <span className="accessibility-tile-icon" aria-hidden="true">{icon || (active ? "\u25cf" : "\u25cb")}</span>
+      <span className="accessibility-tile-label">{label}</span>
+      {description ? <small className="accessibility-tile-description">{description}</small> : null}
+      <span className={`accessibility-switch ${active ? "is-active" : ""}`} aria-hidden="true">
+        <span />
+      </span>
     </button>
   );
 }
 
-function StepControl({ label, valueLabel, onDecrease, onIncrease }: { label: string; valueLabel: string; onDecrease: () => void; onIncrease: () => void }) {
+function InlineIcon({ name }: { name: "keyboard" | "line" | "mask" | "highlight" | "link" | "focus" | "image" | "virtualKeyboard" | "voice" | "hover" | "audio" | "pause" | "fontScale" | "readableFont" | "lineHeight" | "cursor" | "letterSpacing" | "centerAlign" | "bold" | "emoji" | "reading" }) {
+  const baseProps = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    xmlns: "http://www.w3.org/2000/svg",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "accessibility-inline-icon",
+  };
+
+  if (name === "keyboard") {
+    return <svg {...baseProps}><rect x="3.5" y="6.5" width="17" height="11" rx="2.5" /><path d="M7 10h.01M10 10h.01M13 10h.01M16 10h.01M7 13h7M16 13h.01" /></svg>;
+  }
+  if (name === "fontScale") {
+    return <svg {...baseProps}><path d="M6 18l4-10 4 10M7.5 14h5M15.5 10h4M17.5 8v6" /></svg>;
+  }
+  if (name === "readableFont") {
+    return <svg {...baseProps}><path d="M4 18l4-12 4 12M5.8 13h4.4M14 16h6M17 10v6" /></svg>;
+  }
+  if (name === "lineHeight") {
+    return <svg {...baseProps}><path d="M7 6v12M5 8l2-2 2 2M5 16l2 2 2-2M11 8h8M11 12h8M11 16h8" /></svg>;
+  }
+  if (name === "cursor") {
+    return <svg {...baseProps}><path d="M6 4l9 9-4 1 2 5-2 .8-2-5-3 3z" /></svg>;
+  }
+  if (name === "letterSpacing") {
+    return <svg {...baseProps}><path d="M5 17l3-10 3 10M6 13h4M15 8v8M12 12h6" /></svg>;
+  }
+  if (name === "centerAlign") {
+    return <svg {...baseProps}><path d="M5 8h14M8 12h8M6 16h12" /></svg>;
+  }
+  if (name === "bold") {
+    return <svg {...baseProps}><path d="M8 6h5a3 3 0 010 6H8zm0 6h6a3 3 0 010 6H8z" /></svg>;
+  }
+  if (name === "emoji") {
+    return <svg {...baseProps}><circle cx="12" cy="12" r="8" /><path d="M9.5 10h.01M14.5 10h.01M9 14c.8 1 2 1.6 3 1.6s2.2-.6 3-1.6" /></svg>;
+  }
+  if (name === "reading") {
+    return <svg {...baseProps}><path d="M5 7h14v10H5zM9 7v10M11 11h6" /></svg>;
+  }
+  if (name === "line") {
+    return <svg {...baseProps}><path d="M5 8h14M5 12h10M5 16h14" /></svg>;
+  }
+  if (name === "mask") {
+    return <svg {...baseProps}><rect x="4" y="7" width="16" height="10" rx="2" /><path d="M8 12h8M9.5 10.5h.01M14.5 10.5h.01" /></svg>;
+  }
+  if (name === "highlight") {
+    return <svg {...baseProps}><path d="M6 18l4-4m0 0 6-6 3 3-6 6m-3-3 3 3M5 19h4" /></svg>;
+  }
+  if (name === "link") {
+    return <svg {...baseProps}><path d="M10 14l4-4M8.5 16.5l-1.8 1.8a3 3 0 104.2 4.2l1.8-1.8M15.5 7.5l1.8-1.8a3 3 0 114.2 4.2l-1.8 1.8" /></svg>;
+  }
+  if (name === "focus") {
+    return <svg {...baseProps}><path d="M8 4H6a2 2 0 00-2 2v2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M4 16v2a2 2 0 002 2h2" /></svg>;
+  }
+  if (name === "image") {
+    return <svg {...baseProps}><rect x="4" y="5" width="16" height="14" rx="2" /><path d="M8.5 10h.01M6.5 16l4-4 3 3 2-2 2 3" /></svg>;
+  }
+  if (name === "virtualKeyboard") {
+    return <svg {...baseProps}><rect x="3.5" y="8" width="17" height="9" rx="2" /><path d="M7 11h.01M10 11h.01M13 11h.01M16 11h.01M7 14h10" /></svg>;
+  }
+  if (name === "voice") {
+    return <svg {...baseProps}><rect x="9" y="4" width="6" height="10" rx="3" /><path d="M6 11a6 6 0 0012 0M12 17v3M9 20h6" /></svg>;
+  }
+  if (name === "hover") {
+    return <svg {...baseProps}><path d="M6 6l8 8m0-5v5h5M18 18H6V6" /></svg>;
+  }
+  if (name === "audio") {
+    return <svg {...baseProps}><path d="M10 9L7.5 11H5v2h2.5l2.5 2V9zM15 10.5a3 3 0 010 3M17.5 8a6.5 6.5 0 010 8" /></svg>;
+  }
+  return <svg {...baseProps}><path d="M9 8v8M15 8v8" /></svg>;
+}
+
+function StepControl({
+  label,
+  valueLabel,
+  onDecrease,
+  onIncrease,
+  icon,
+}: {
+  label: string;
+  valueLabel: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  icon?: ReactNode;
+}) {
   return (
     <div className="accessibility-step-card">
-      <strong>{label}</strong>
+      <div className="accessibility-step-head">
+        <span className="accessibility-toggle-row-icon" aria-hidden="true">{icon || "\u2022"}</span>
+        <strong>{label}</strong>
+      </div>
       <div className="accessibility-step-row">
         <button type="button" className="accessibility-step-button" onClick={onIncrease} aria-label={`Increase ${label}`}>+</button>
         <span>{valueLabel}</span>
@@ -64,7 +198,7 @@ function ColorPicker({ label, value, onChange }: { label: string; value: string;
             style={{ width: 22, height: 22, borderRadius: 999, border: value === color ? "2px solid #1f1435" : "1px solid #d7cee9", background: color }}
           />
         ))}
-        <button type="button" className="accessibility-step-button" aria-label={`Reset ${label}`} onClick={() => onChange("")}>×</button>
+        <button type="button" className="accessibility-step-button" aria-label={`Reset ${label}`} onClick={() => onChange("")}>{"\u00d7"}</button>
       </div>
     </div>
   );
@@ -459,96 +593,123 @@ export function AccessibilityWidget() {
         aria-label={t("accessibility.title")}
       >
       <div className="accessibility-panel-head">
-        <strong>{t("accessibility.title")}</strong>
+        <div className="accessibility-panel-head-copy">
+          <span className="accessibility-panel-head-icon" aria-hidden="true">A</span>
+          <div>
+            <strong>Accessibilite</strong>
+            <p className="accessibility-panel-subtitle">Personnalisez votre experience</p>
+          </div>
+        </div>
         <button type="button" className="accessibility-close" onClick={() => setOpen(false)} aria-label={t("common.actions.close")}>{"\u00d7"}</button>
       </div>
 
       <section className="accessibility-module">
-        <p className="accessibility-module-title">Quick accessibility modes</p>
-        <div className="accessibility-grid accessibility-grid-large">
+        <p className="accessibility-module-title">Modes rapides</p>
+        <p className="accessibility-module-subtitle">Activez un mode predefini pour adapter instantanement l interface.</p>
+        <div className="accessibility-grid accessibility-grid-scroll">
           <FeatureToggle
-            label="Epilepsy Safe Mode"
-            description="Stops animations, lowers saturation and mutes sounds."
+            label="Epilepsie"
+            description="Reduit les animations, la saturation et les sons."
             active={settings.activeQuickMode === "epilepsySafe"}
             onClick={() => applyMode("epilepsySafe")}
+            icon="EP"
+            tone="epilepsy"
           />
           <FeatureToggle
-            label="Visually Impaired Mode"
-            description="Boosts contrast, readable font, focus and larger text spacing."
+            label="Malvoyance"
+            description="Ameliore le contraste et agrandit les contenus."
             active={settings.activeQuickMode === "visuallyImpaired"}
             onClick={() => applyMode("visuallyImpaired")}
+            icon="MV"
+            tone="vision"
           />
           <FeatureToggle
-            label="Cognitive Disability Mode"
-            description="Reduces visual noise and improves reading comfort."
+            label="Dyslexie & Cognitif"
+            description="Reduit le bruit visuel et facilite la lecture."
             active={settings.activeQuickMode === "cognitive"}
             onClick={() => applyMode("cognitive")}
+            icon="DX"
+            tone="dyslexia"
           />
           <FeatureToggle
-            label="ADHD Friendly Mode"
-            description="Improves focus with reading mask, hover/focus highlights and less motion."
+            label="Concentration (ADHD)"
+            description="Aide a se concentrer avec masque et surbrillance."
             active={settings.activeQuickMode === "adhdFriendly"}
             onClick={() => applyMode("adhdFriendly")}
+            icon="AD"
+            tone="adhd"
           />
           <FeatureToggle
-            label="Blindness Mode"
-            description="Optimizes keyboard and voice navigation with high contrast."
+            label="Non-voyants"
+            description="Optimise clavier et navigation vocale."
             active={settings.activeQuickMode === "blindness"}
             onClick={() => applyMode("blindness")}
+            icon="NV"
+            tone="blindness"
           />
         </div>
       </section>
 
       <section className="accessibility-module">
-        <p className="accessibility-module-title">{t("accessibility.content")}</p>
+        <p className="accessibility-module-title">Contenu</p>
+        <p className="accessibility-module-subtitle">Ajustez la lisibilite du texte et la presentation.</p>
         <div className="accessibility-grid accessibility-grid-large">
-          <StepControl label={t("accessibility.fontSize")} valueLabel={fontLabel} onIncrease={() => setFontScale(settings.fontScale + 0.05)} onDecrease={() => setFontScale(settings.fontScale - 0.05)} />
-          <FeatureToggle label={t("accessibility.readableFont")} active={settings.readableFont} onClick={() => toggleSetting("readableFont")} />
-          <StepControl label={t("accessibility.lineHeight")} valueLabel={lineHeightLabel} onIncrease={() => setLineHeight(settings.lineHeight + 0.1)} onDecrease={() => setLineHeight(settings.lineHeight - 0.1)} />
-          <FeatureToggle label={t("accessibility.largeCursor")} active={settings.largeCursor} onClick={() => toggleSetting("largeCursor")} />
-          <FeatureToggle label={t("accessibility.letterSpacing")} active={settings.letterSpacing} onClick={() => toggleSetting("letterSpacing")} />
-          <FeatureToggle label={t("accessibility.centerAlign")} active={settings.centerAlign} onClick={() => toggleSetting("centerAlign")} />
-          <FeatureToggle label={t("accessibility.boldText")} active={settings.boldText} onClick={() => toggleSetting("boldText")} />
-          <FeatureToggle label="Hide emoji" active={settings.hideEmoji} onClick={() => toggleSetting("hideEmoji")} />
-          <FeatureToggle label="Cognitive reading" active={settings.cognitiveReading} onClick={() => toggleSetting("cognitiveReading")} />
+          <StepControl icon={<InlineIcon name="fontScale" />} label={t("accessibility.fontSize")} valueLabel={fontLabel} onIncrease={() => setFontScale(settings.fontScale + 0.05)} onDecrease={() => setFontScale(settings.fontScale - 0.05)} />
+          <FeatureToggle compact icon={<InlineIcon name="readableFont" />} label={t("accessibility.readableFont")} active={settings.readableFont} onClick={() => toggleSetting("readableFont")} />
+          <StepControl icon={<InlineIcon name="lineHeight" />} label={t("accessibility.lineHeight")} valueLabel={lineHeightLabel} onIncrease={() => setLineHeight(settings.lineHeight + 0.1)} onDecrease={() => setLineHeight(settings.lineHeight - 0.1)} />
+          <FeatureToggle compact icon={<InlineIcon name="cursor" />} label={t("accessibility.largeCursor")} active={settings.largeCursor} onClick={() => toggleSetting("largeCursor")} />
+          <FeatureToggle compact icon={<InlineIcon name="letterSpacing" />} label={t("accessibility.letterSpacing")} active={settings.letterSpacing} onClick={() => toggleSetting("letterSpacing")} />
+          <FeatureToggle compact icon={<InlineIcon name="bold" />} label={t("accessibility.boldText")} active={settings.boldText} onClick={() => toggleSetting("boldText")} />
+          <FeatureToggle compact icon={<InlineIcon name="emoji" />} label="Masquer les emojis" active={settings.hideEmoji} onClick={() => toggleSetting("hideEmoji")} />
+          <FeatureToggle compact icon={<InlineIcon name="reading" />} label="Lecture cognitive" active={settings.cognitiveReading} onClick={() => toggleSetting("cognitiveReading")} />
+          <FeatureToggle compact icon={<InlineIcon name="centerAlign" />} label={t("accessibility.centerAlign")} active={settings.centerAlign} onClick={() => toggleSetting("centerAlign")} />
         </div>
       </section>
 
       <section className="accessibility-module">
-        <p className="accessibility-module-title">{t("accessibility.colors")}</p>
-        <div className="accessibility-grid">
-          <FeatureToggle label={t("accessibility.lightContrast")} active={settings.lightContrast} onClick={() => toggleSetting("lightContrast")} />
-          <FeatureToggle label={t("accessibility.highContrast")} active={settings.highContrast} onClick={() => toggleSetting("highContrast")} />
-          <FeatureToggle label={t("accessibility.monochrome")} active={settings.monochrome} onClick={() => toggleSetting("monochrome")} />
-          <FeatureToggle label="High saturation" active={settings.highSaturation} onClick={() => toggleSetting("highSaturation")} />
-          <FeatureToggle label="Low saturation" active={settings.lowSaturation} onClick={() => toggleSetting("lowSaturation")} />
+        <p className="accessibility-module-title">Couleurs</p>
+        <p className="accessibility-module-subtitle">Choisissez un contraste adapte puis personnalisez les couleurs.</p>
+        <div className="accessibility-chip-row">
+          <FeatureToggle chip label={t("accessibility.lightContrast")} active={settings.lightContrast} onClick={() => toggleSetting("lightContrast")} />
+          <FeatureToggle chip label={t("accessibility.highContrast")} active={settings.highContrast} onClick={() => toggleSetting("highContrast")} />
+          <FeatureToggle chip label={t("accessibility.monochrome")} active={settings.monochrome} onClick={() => toggleSetting("monochrome")} />
+          <FeatureToggle chip label="Haute saturation" active={settings.highSaturation} onClick={() => toggleSetting("highSaturation")} />
+          <FeatureToggle chip label="Basse saturation" active={settings.lowSaturation} onClick={() => toggleSetting("lowSaturation")} />
         </div>
       </section>
 
       <section className="accessibility-module">
-        <p className="accessibility-module-title">Color adjustments</p>
+        <p className="accessibility-module-title">Personnaliser les couleurs</p>
         <div className="accessibility-grid accessibility-grid-large">
-          <ColorPicker label="Title colors" value={settings.titleColor} onChange={(value) => setColorSetting("titleColor", value)} />
-          <ColorPicker label="Text colors" value={settings.textColor} onChange={(value) => setColorSetting("textColor", value)} />
-          <ColorPicker label="Background colors" value={settings.backgroundColor} onChange={(value) => setColorSetting("backgroundColor", value)} />
+          <ColorPicker label="Couleur des titres" value={settings.titleColor} onChange={(value) => setColorSetting("titleColor", value)} />
+          <ColorPicker label="Couleur du texte" value={settings.textColor} onChange={(value) => setColorSetting("textColor", value)} />
+          <ColorPicker label="Couleur de fond" value={settings.backgroundColor} onChange={(value) => setColorSetting("backgroundColor", value)} />
         </div>
       </section>
 
       <section className="accessibility-module">
-        <p className="accessibility-module-title">{t("accessibility.orientation")}</p>
-        <div className="accessibility-grid">
-          <FeatureToggle label={t("accessibility.keyboardMoveMode")} active={settings.keyboardMoveMode} onClick={() => toggleSetting("keyboardMoveMode")} />
-          <FeatureToggle label={t("accessibility.readingLine")} active={settings.readingLine} onClick={() => toggleSetting("readingLine")} />
-          <FeatureToggle label={t("accessibility.readingMask")} active={settings.readingMask} onClick={() => toggleSetting("readingMask")} />
-          <FeatureToggle label={t("accessibility.hideImages")} active={settings.hideImages} onClick={() => toggleSetting("hideImages")} />
-          <FeatureToggle label={t("accessibility.stopAnimations")} active={settings.stopAnimations} onClick={() => toggleSetting("stopAnimations")} />
-          <FeatureToggle label={t("accessibility.highlightContent")} active={settings.highlightContent} onClick={() => toggleSetting("highlightContent")} />
-          <FeatureToggle label={t("accessibility.underlineLinks")} active={settings.underlineLinks} onClick={() => toggleSetting("underlineLinks")} />
-          <FeatureToggle label="Highlight hover" active={settings.highlightHover} onClick={() => toggleSetting("highlightHover")} />
-          <FeatureToggle label="Highlight focus" active={settings.highlightFocus} onClick={() => toggleSetting("highlightFocus")} />
-          <FeatureToggle label="Mute sounds" active={settings.muteSounds} onClick={() => toggleSetting("muteSounds")} />
-          <FeatureToggle label="Virtual keyboard" active={settings.virtualKeyboard} onClick={() => toggleSetting("virtualKeyboard")} />
-          <FeatureToggle label="Voice navigation" active={settings.voiceNavigation} onClick={() => toggleSetting("voiceNavigation")} />
+        <p className="accessibility-module-title">Orientation</p>
+        <p className="accessibility-module-subtitle">Facilitez la navigation clavier, focus et lecture guidee.</p>
+        <div className="accessibility-grid accessibility-grid-rows">
+          <FeatureToggle compact icon={<InlineIcon name="keyboard" />} label="Mode navigation clavier" active={settings.keyboardMoveMode} onClick={() => toggleSetting("keyboardMoveMode")} />
+          <FeatureToggle compact icon={<InlineIcon name="line" />} label="Ligne de lecture" active={settings.readingLine} onClick={() => toggleSetting("readingLine")} />
+          <FeatureToggle compact icon={<InlineIcon name="mask" />} label="Masque de lecture" active={settings.readingMask} onClick={() => toggleSetting("readingMask")} />
+          <FeatureToggle compact icon={<InlineIcon name="highlight" />} label="Surligner le contenu" active={settings.highlightContent} onClick={() => toggleSetting("highlightContent")} />
+          <FeatureToggle compact icon={<InlineIcon name="link" />} label="Surligner les liens" active={settings.underlineLinks} onClick={() => toggleSetting("underlineLinks")} />
+          <FeatureToggle compact icon={<InlineIcon name="focus" />} label="Surligner le focus" active={settings.highlightFocus} onClick={() => toggleSetting("highlightFocus")} />
+          <FeatureToggle compact icon={<InlineIcon name="image" />} label="Masquer les images" active={settings.hideImages} onClick={() => toggleSetting("hideImages")} />
+          <FeatureToggle compact icon={<InlineIcon name="virtualKeyboard" />} label="Clavier virtuel" active={settings.virtualKeyboard} onClick={() => toggleSetting("virtualKeyboard")} />
+          <FeatureToggle compact icon={<InlineIcon name="voice" />} label="Navigation vocale" active={settings.voiceNavigation} onClick={() => toggleSetting("voiceNavigation")} />
+          <FeatureToggle compact icon={<InlineIcon name="hover" />} label="Surlignage au survol" active={settings.highlightHover} onClick={() => toggleSetting("highlightHover")} />
+        </div>
+      </section>
+
+      <section className="accessibility-module">
+        <p className="accessibility-module-title">Audio & animations</p>
+        <p className="accessibility-module-subtitle">Controlez les elements sonores et les mouvements.</p>
+        <div className="accessibility-grid accessibility-grid-rows">
+          <FeatureToggle compact icon={<InlineIcon name="audio" />} label="Couper les sons" active={settings.muteSounds} onClick={() => toggleSetting("muteSounds")} />
+          <FeatureToggle compact icon={<InlineIcon name="pause" />} label="Arreter les animations" active={settings.stopAnimations} onClick={() => toggleSetting("stopAnimations")} />
         </div>
       </section>
 
@@ -660,13 +821,13 @@ export function AccessibilityWidget() {
         </section>
       ) : null}
       <section className="accessibility-module">
-        <p className="accessibility-module-title">Link navigator</p>
+        <p className="accessibility-module-title">Lien rapide</p>
         <div style={{ display: "grid", gap: "8px" }}>
           <select value={selectedLink} onChange={(event) => setSelectedLink(event.target.value)} className="language-switcher-select" aria-label="Link navigator">
-            <option value="">Select an option</option>
+            <option value="">Selectionnez une option</option>
             {links.map((item) => <option key={item.href} value={item.href}>{item.label}</option>)}
           </select>
-          <button type="button" className="accessibility-reset" onClick={() => selectedLink && window.location.assign(selectedLink)}>Open selected link</button>
+          <button type="button" className="accessibility-reset" onClick={() => selectedLink && window.location.assign(selectedLink)}>Ouvrir le lien</button>
         </div>
       </section>
 
@@ -766,7 +927,7 @@ export function AccessibilityWidget() {
                 setKeyboardStatus("Backspace");
               }}
             >
-              ⌫
+              {"\u232b"}
             </button>
             <button
               type="button"
@@ -794,10 +955,16 @@ export function AccessibilityWidget() {
         </section>
       ) : null}
 
-        <button type="button" className="accessibility-reset" onClick={resetSettings}>{t("accessibility.reset")}</button>
+        <div className="accessibility-panel-footer">
+          <button type="button" className="accessibility-reset" onClick={resetSettings}>{t("accessibility.reset")}</button>
+          <p className="accessibility-footer-note">Vos preferences sont sauvegardees automatiquement.</p>
+        </div>
       </div>
     </>
   );
 
   return createPortal(panel, document.body);
 }
+
+
+
